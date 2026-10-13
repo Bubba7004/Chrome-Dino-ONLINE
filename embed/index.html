@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dino Run — Solo &amp; Online</title>
+<title>about:blank</title>
 <style>
 :root{--bg:#0f1420;--card:#1a2133;--card2:#232c43;--tx:#e8ecf5;--mut:#8b96b0;--ac:#4ade80;--bad:#f87171;--gold:#fbbf24}
 *{box-sizing:border-box}html,body{margin:0;height:100%;font-family:Inter,system-ui,Segoe UI,Arial,sans-serif;background:radial-gradient(circle at 50% 0,#1c2745,var(--bg));color:var(--tx);overflow:hidden}
@@ -791,7 +791,7 @@ async function endRace(){
 }
 function showResults(){
   phase='res';clearInterval(pubT);clearInterval(endT);clearInterval(cdT);unsubL&&unsubL();unsubL=null;
-  R.stopOnline();hideRaceUI();
+  R.stopOnline();hideRaceUI();closeRaceChat();
   const res=G.res.map(r=>({u:String(r&&r.u||''),n:String(r&&r.n||'Dino').slice(0,14),c:safeColor(r&&r.c),s:Math.max(0,num(r&&r.s)|0)}));
   const n=res.length,mi=res.findIndex(r=>r.u===me.uid);
   if(mi>=0&&lastRecorded!==G.startedAt&&!botUsed){
@@ -828,10 +828,10 @@ function renderChat(){
   for(const id of ['chRoom','chRes']){const el=$(id);if(!el)continue;const stick=el.scrollTop+el.clientHeight>=el.scrollHeight-30;el.innerHTML=full;if(stick||!el.dataset.init){el.scrollTop=el.scrollHeight;el.dataset.init=1}}
   const now=Date.now(),open=document.activeElement===$('chInRace'),el=$('chRaceLog');
   el.innerHTML=chatLog.filter(m=>open||now-m.t<10000).slice(-6).map(chatLine).join('');
-  $('chRace').style.display=(phase==='play'&&(open||el.innerHTML))?'block':'none';
+  $('chRace').style.display=((phase==='play'||phase==='cd')&&(open||el.innerHTML))?'block':'none';
   el.scrollTop=el.scrollHeight;
 }
-setInterval(()=>{if(phase==='play')renderChat()},1000);
+setInterval(()=>{if(phase==='play'||phase==='cd')renderChat()},1000);
 function sendChat(text){
   text=String(text||'').replace(/\s+/g,' ').trim().slice(0,CHAT_MAX);
   if(!text||!gid||!G)return false;
@@ -843,7 +843,7 @@ function sendChat(text){
   return true;
 }
 function openRaceChat(){
-  if(phase!=='play')return;R.releaseMoves();$('chRace').style.display='block';$('chInRace').style.display='block';$('chInRace').focus();renderChat();
+  if(phase!=='play'&&phase!=='cd')return;R.releaseMoves();$('chRace').style.display='block';$('chInRace').style.display='block';$('chInRace').focus();renderChat();
 }
 function closeRaceChat(){const i=$('chInRace');i.value='';i.style.display='none';i.blur();renderChat()}
 [['chInRoom','chBtnRoom'],['chInRes','chBtnRes']].forEach(([i,b])=>{
@@ -862,7 +862,9 @@ function sendEmote(i){
 }
 function addFloat(u,i){if(G&&G.mute&&u!==me.uid)return;if(i>=1&&i<=CONFIG.EMOTES.length)floats.push({u,e:CONFIG.EMOTES[i-1],at:Date.now()})}
 document.addEventListener('keydown',e=>{
-  if(phase!=='play'||e.repeat||/^(INPUT|SELECT|TEXTAREA)$/.test((e.target&&e.target.tagName)||''))return;
+  if((phase!=='play'&&phase!=='cd')||e.repeat||/^(INPUT|SELECT|TEXTAREA)$/.test((e.target&&e.target.tagName)||''))return;
+  if(e.key==='Enter'){e.preventDefault();openRaceChat();return}
+  if(phase!=='play')return;
   if(R.crashed){const k=e.key;
     if(k==='ArrowLeft'||k==='a'||k==='A'){cycleSpec(-1);e.preventDefault();return}
     if(k==='ArrowRight'||k==='d'||k==='D'){cycleSpec(1);e.preventDefault();return}}
@@ -1036,7 +1038,7 @@ function loop(){
     $('hud').innerHTML=rows.map((p,i)=>`<span data-u="${esc(p.u)}" class="${p.me?'me':''} ${p.d?'out':''} ${R.crashed&&p.u===specU?'watch':''}"><span style="color:${p.c}">●</span> ${i+1}. ${esc(p.n)} <b>${p.s|0}</b>${p.d?' 💀':''}</span>`).join('');
     const others=rows.filter(r=>!r.me&&!r.d).length;
     $('hud').classList.toggle('pick',phase==='play'&&R.crashed);
-    $('note').textContent=(phase==='play'&&R.crashed&&G.players[specU])?`💀 You crashed — 👁 watching ${G.players[specU].name}${specU===me.uid?' (your splat)':''}${others?'':' · waiting for results…'} · ◀ ▶ or click a name to switch`:'';
+    $('note').textContent=(phase==='play'&&R.crashed&&G.players[specU])?`💀 You crashed — 👁 watching ${G.players[specU].name}${specU===me.uid?' (your splat)':''}${others?'':' · waiting for results…'} · ◀ ▶ or click a name to switch · Enter = chat`:'';
     if(G.local&&infoBase&&phase==='play'){const os=Object.keys(G.players).filter(x=>x!==me.uid);$('info').textContent=infoBase+` · 📡 ${os.filter(linked).length}/${os.length} linked`}
   }
 }
